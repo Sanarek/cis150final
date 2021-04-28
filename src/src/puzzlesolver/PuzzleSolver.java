@@ -1,7 +1,6 @@
 package puzzlesolver;
 
 import java.util.*;
-import java.util.regex.*;
 import java.awt.Dimension;
 import java.awt.Toolkit;
 import java.io.*;
@@ -13,10 +12,12 @@ import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class PuzzleSolver {
 
+	//Most of these constants are just for optimization during the loop later on
 	public static final String[] noteNames = {"C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"};
 	public static final String[] intervalNames = {"INVALID", "INVALID", "INVALID", "Minor 3rd", "Major 3rd", "Perfect 4th", "INVALID", "Perfect 5th", "Minor 6th", "Major 6th", "INVALID", "INVALID"};
 	public static final int[] intervals = {3, 4, 5, 7, 8, 9};
 	public static final boolean[] isInterval = {false, false, false, true, true, true, false, true, true, true, false, false};
+	//We have 12! combinations to check
 	public static final int maxCombos = 479001600;
 	public static NumberFormat numberFormat = NumberFormat.getInstance();
 	
@@ -64,7 +65,7 @@ public class PuzzleSolver {
 			//And finally close our output stream to prevent a memory leak.
 			outputStream.close();
 		} catch(Exception e) {
-			System.err.println("IOException trying to read file: "+args[0]);
+			System.err.println("IOException trying to read file: "+path);
 			e.printStackTrace();
 			System.exit(-1);
 		}
@@ -79,9 +80,9 @@ public class PuzzleSolver {
 		progressBar.setString("Saving: 0/"+formattedSolutionCount);
 		//Prepare by getting bytes of all note and interval names
 		byte[][] noteBytes = new byte[12][];
-		byte[][] intervalBytes = new byte[6][];
+		byte[][] intervalBytes = new byte[12][];
 		for(int i = 0; i < 12; i++) noteBytes[i] = (noteNames[i]+",").getBytes();
-		for(int i = 0; i < 6; i++) intervalBytes[i] = (intervalNames[i]+",").getBytes();
+		for(int i = 0; i < 12; i++) intervalBytes[i] = (intervalNames[i]+",").getBytes();
 		
 		//The .csv file header
 		output.write("Note 1, Note 2, Note 3, Note 4, Note 5, Note 6, Note 7, Note 8, Note 9, Note 10, Note 11, Note 12, Interval 1, Interval 2, Interval 3, Interval 4, Interval 5, Interval 6, Note Name 1, Note Name 2, Note Name 3, Note Name 4, Note Name 5, Note Name 6, Note Name 7, Note Name 8, Note Name 9, Note Name 10, Note Name 11, Note Name 12, Interval Name 1, Interval Name 2, Interval Name 3, Interval Name 4, Interval Name 5, Interval Name 6,\n".getBytes());
@@ -122,7 +123,6 @@ public class PuzzleSolver {
 		
 		int[] swaplist = {11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 0};
 		int solutionCount = 0;
-		long startTime = System.currentTimeMillis();
 		//We declare these outside of the loop so that they don't get re-initialized over and over, which is expensive, however we have to reset them manually
 		boolean[] picked = new boolean[12];
 		boolean[] intervalsUsed = new boolean[11];
@@ -169,6 +169,7 @@ public class PuzzleSolver {
 				for(int j = swaplist[k]; (j > 0) | (picked[currentNotes[k]]); j--) { //We don't want to stop on notes we already picked if j = 0, hence the multiple boolean statements
 					if(picked[currentNotes[k]]) j++; //This makes us skip over notes we already picked
 					currentNotes[k]++;
+					if(currentNotes[k] == 12) System.out.println("oman code");
 				}
 				picked[currentNotes[k]] = true;
 			}
@@ -199,7 +200,6 @@ public class PuzzleSolver {
 			//If we've made it to this point, our current combination is a valid solution, so we just have to add it to the list
 			solutionCount++;
 			solutions.add(currentNotes.clone());
-			System.out.println(Arrays.toString(currentNotes));
 		}
 		
 		//Update the progress bar with the maximum value
